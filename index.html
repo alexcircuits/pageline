@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self';
+             connect-src https://www.googleapis.com;
+             img-src 'self' https://books.google.com http://books.google.com https://covers.openlibrary.org data: blob:;
+             style-src 'self' 'unsafe-inline';
+             script-src 'self'">
+  <title>Pageline</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ── SVG icon library ─────────────────────────────────────────────────── -->
+<svg aria-hidden="true" focusable="false" style="display:none">
+  <symbol id="icon-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+  </symbol>
+  <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+  </symbol>
+  <symbol id="icon-library" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0l-5.571 3-5.571-3"/>
+  </symbol>
+  <symbol id="icon-cog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/>
+    <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+  </symbol>
+  <symbol id="icon-play" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M8 5.14v14l11-7-11-7z"/>
+  </symbol>
+  <symbol id="icon-stop" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M6 6h12v12H6z"/>
+  </symbol>
+  <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+    <path d="M12 5v14M5 12h14"/>
+  </symbol>
+  <symbol id="icon-swap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-9L21 12m0 0l-4.5-4.5M21 7.5H7.5"/>
+  </symbol>
+  <symbol id="icon-update" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
+  </symbol>
+  <symbol id="icon-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7.5 3.75H6A2.25 2.25 0 003.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0120.25 6v1.5m0 9V18A2.25 2.25 0 0118 20.25h-1.5m-9 0H6A2.25 2.25 0 013.75 18v-1.5M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+  </symbol>
+  <symbol id="icon-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
+  </symbol>
+  <symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+  </symbol>
+  <symbol id="icon-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
+  </symbol>
+  <symbol id="icon-flame" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12.945 2.02c-.136-.136-.358-.063-.396.12-.488 2.394-1.89 3.877-3.305 5.177-1.19 1.094-2.394 2.158-3.004 3.738-.618 1.601-.362 3.45.672 4.826C7.958 17.36 9.573 18 11.25 18c1.946 0 3.57-.969 4.546-2.544a5.249 5.249 0 00.473-4.265c-.394-1.292-1.11-2.345-1.874-3.32-.634-.815-1.308-1.604-1.45-2.85zM11.25 19.5a6.75 6.75 0 110-13.5c.155 0 .308.006.461.017C11.07 8.001 10.5 9.75 10.5 11.25c0 1.657.619 3.17 1.636 4.322A3.75 3.75 0 0111.25 19.5z"/>
+  </symbol>
+</svg>
+
+<div class="titlebar-drag"></div>
+
+<div class="app-layout">
+
+  <!-- ── Sidebar ───────────────────────────────────────────────────────── -->
+  <nav class="sidebar">
+    <div class="app-brand">
+      <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#icon-book"/></svg>
+      <span class="brand-name">Pageline</span>
+    </div>
+
+    <div class="nav-links">
+      <button class="nav-btn active" data-tab="reading">
+        <svg class="icon" width="16" height="16" aria-hidden="true"><use href="#icon-book"/></svg>
+        Reading
+      </button>
+      <button class="nav-btn" data-tab="search">
+        <svg class="icon" width="16" height="16" aria-hidden="true"><use href="#icon-search"/></svg>
+        Search
+      </button>
+      <button class="nav-btn" data-tab="library">
+        <svg class="icon" width="16" height="16" aria-hidden="true"><use href="#icon-library"/></svg>
+        Library
+      </button>
+      <button class="nav-btn" data-tab="stats">
+        <svg class="icon" width="16" height="16" aria-hidden="true"><use href="#icon-chart"/></svg>
+        Stats
+      </button>
+      <button class="nav-btn" data-tab="settings">
+        <svg class="icon" width="16" height="16" aria-hidden="true"><use href="#icon-cog"/></svg>
+        Settings
+      </button>
+    </div>
+
+    <div class="sidebar-status">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">Disconnected</span>
+    </div>
+  </nav>
+
+  <!-- ── Main content ──────────────────────────────────────────────────── -->
+  <main class="content">
+
+    <!-- ── Tab: Reading ────────────────────────────────────────────────── -->
+    <section class="tab-panel active" id="tab-reading">
+      <div class="panel-header">
+        <h1 class="panel-title">Now Reading</h1>
+        <button class="btn btn-secondary btn-sm" id="btn-detect-apple" style="display:none">
+          <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-scan"/></svg>
+          Detect from Apple Books
+        </button>
+      </div>
+
+      <!-- Empty -->
+      <div class="empty-state" id="reading-empty">
+        <svg class="empty-icon icon" width="44" height="44" aria-hidden="true"><use href="#icon-book"/></svg>
+        <h2>No book selected</h2>
+        <p>Search for a book or pick one from your library to get started.</p>
+        <div class="empty-actions">
+          <button class="btn btn-primary" data-tab-link="search">Search Books</button>
+          <button class="btn btn-secondary" data-tab-link="library">Open Library</button>
+        </div>
+      </div>
+
+      <!-- Active book -->
+      <div class="reading-card hidden" id="reading-card">
+        <div class="cover-col">
+          <img id="active-cover" class="book-cover-lg hidden" src="" alt="Book cover">
+          <div id="cover-placeholder" class="cover-placeholder hidden"></div>
+        </div>
+
+        <div class="book-meta">
+          <h2 class="book-title" id="active-title"></h2>
+          <p class="book-authors" id="active-authors"></p>
+          <p class="book-desc" id="active-desc"></p>
+
+          <div class="divider"></div>
+
+          <div class="page-section">
+            <label class="field-label">Current Page</label>
+            <div class="page-row">
+              <button class="page-stepper" id="page-down" aria-label="Previous page">−</button>
+              <input type="number" id="page-current" min="1" value="1" aria-label="Current page">
+              <span class="page-of">of</span>
+              <input type="number" id="page-total" min="1" placeholder="?" aria-label="Total pages">
+              <button class="page-stepper" id="page-up" aria-label="Next page">+</button>
+              <button class="btn btn-ghost btn-sm" id="btn-update-page">
+                <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-update"/></svg>
+                Update
+              </button>
+            </div>
+          </div>
+
+          <div class="progress-wrap" id="progress-wrap">
+            <div class="progress-track">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <span class="progress-pct" id="progress-pct"></span>
+          </div>
+
+          <div class="timer-row" id="timer-row">
+            <span class="timer-label">Reading for</span>
+            <span class="timer-value" id="timer-value">0:00:00</span>
+          </div>
+
+          <div class="reading-actions">
+            <button class="btn btn-primary btn-lg" id="btn-start-reading">
+              <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-play"/></svg>
+              Start Reading
+            </button>
+            <button class="btn btn-danger btn-lg hidden" id="btn-stop-reading">
+              <svg class="icon" width="12" height="12" aria-hidden="true"><use href="#icon-stop"/></svg>
+              Stop Reading
+            </button>
+            <button class="btn btn-secondary" id="btn-add-to-library">
+              <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-plus"/></svg>
+              Save
+            </button>
+            <button class="btn btn-ghost" id="btn-change-book">
+              <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-swap"/></svg>
+              Change
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Tab: Search ──────────────────────────────────────────────────── -->
+    <section class="tab-panel" id="tab-search">
+      <div class="panel-header">
+        <h1 class="panel-title">Search Books</h1>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-input"
+          placeholder="Search by title, author, or ISBN…"
+          autocomplete="off" spellcheck="false">
+        <button class="btn btn-primary" id="btn-search">
+          <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#icon-search"/></svg>
+          Search
+        </button>
+      </div>
+
+      <div class="search-status hidden" id="search-status"></div>
+      <div class="book-grid hidden" id="search-skeleton"></div>
+      <div class="book-grid" id="search-results"></div>
+    </section>
+
+    <!-- ── Tab: Library ─────────────────────────────────────────────────── -->
+    <section class="tab-panel" id="tab-library">
+      <div class="panel-header">
+        <h1 class="panel-title">My Library</h1>
+        <button class="btn btn-secondary btn-sm" id="btn-add-custom">
+          <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-plus"/></svg>
+          Add Book
+        </button>
+      </div>
+      <div class="empty-state hidden" id="library-empty">
+        <svg class="empty-icon icon" width="44" height="44" aria-hidden="true"><use href="#icon-library"/></svg>
+        <h2>Library is empty</h2>
+        <p>Books you save will appear here for quick access.</p>
+        <button class="btn btn-primary mt-4" data-tab-link="search">Search Books</button>
+      </div>
+      <div class="book-grid" id="library-grid"></div>
+    </section>
+
+    <!-- ── Tab: Stats ───────────────────────────────────────────────────── -->
+    <section class="tab-panel" id="tab-stats">
+      <div class="panel-header">
+        <h1 class="panel-title">Reading Stats</h1>
+        <button class="btn btn-secondary btn-sm" id="btn-export-sessions">
+          <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#icon-link"/></svg>
+          Export CSV
+        </button>
+      </div>
+
+      <!-- Daily goal progress -->
+      <div class="goal-progress-wrap" id="goal-progress-wrap" style="display:none">
+        <div class="goal-track">
+          <div class="goal-fill" id="goal-fill"></div>
+        </div>
+        <div class="goal-text" id="goal-text"></div>
+      </div>
+
+      <!-- Stat cards -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Today</div>
+          <div class="stat-value" id="stat-today">0:00</div>
+          <div class="stat-sub" id="stat-today-sessions"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">This Week</div>
+          <div class="stat-value" id="stat-week">0:00</div>
+          <div class="stat-sub" id="stat-week-sessions"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">This Month</div>
+          <div class="stat-value" id="stat-month">0:00</div>
+          <div class="stat-sub" id="stat-month-sessions"></div>
+        </div>
+        <div class="stat-card stat-card--streak">
+          <div class="stat-label">Reading Streak</div>
+          <div class="stat-value stat-streak-value" id="stat-streak">0</div>
+          <div class="stat-sub">days in a row</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pages Read</div>
+          <div class="stat-value" id="stat-pages">0</div>
+          <div class="stat-sub">this month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Books Started</div>
+          <div class="stat-value" id="stat-books">0</div>
+          <div class="stat-sub">all time</div>
+        </div>
+      </div>
+
+      <!-- Mini bar chart — last 7 days -->
+      <div class="stats-section">
+        <h2 class="stats-section-title">Last 7 Days</h2>
+        <div class="bar-chart" id="bar-chart"></div>
+      </div>
+
+      <!-- Recent sessions -->
+      <div class="stats-section">
+        <h2 class="stats-section-title">Recent Sessions</h2>
+        <div class="session-list" id="session-list">
+          <div class="empty-state-inline">No sessions recorded yet — start reading to track your progress.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Tab: Settings ────────────────────────────────────────────────── -->
+    <section class="tab-panel" id="tab-settings">
+      <div class="panel-header">
+        <h1 class="panel-title">Settings</h1>
+      </div>
+
+      <div class="settings-wrap">
+        <!-- Discord -->
+        <div class="settings-card">
+          <p class="settings-card-title">Discord</p>
+
+          <div class="field-group">
+            <label class="field-label" for="input-client-id">Application ID</label>
+            <input type="text" id="input-client-id"
+              placeholder="e.g. 1234567890123456789"
+              autocomplete="off" spellcheck="false">
+            <p class="field-hint">
+              Create a free app at
+              <a href="#" id="link-dev-portal">discord.com/developers</a>
+              and paste its Application ID here.
+            </p>
+          </div>
+
+          <div class="field-group">
+            <label class="toggle-label">
+              <input type="checkbox" id="toggle-show-timer" checked>
+              <span>Show elapsed reading time in Discord status</span>
+            </label>
+          </div>
+
+          <div class="field-group">
+            <label class="toggle-label">
+              <input type="checkbox" id="toggle-show-pages" checked>
+              <span>Show current page in Discord status</span>
+            </label>
+          </div>
+
+          <p class="field-hint">
+            <strong>Tip:</strong> The activity name shown above your status (e.g. "Playing <em>book</em>")
+            comes from your Discord application's name. Rename your app on
+            <a href="#" id="link-dev-portal-3">discord.com/developers</a>
+            (e.g. to "Pageline" or "Reading") and reconnect to update it.
+          </p>
+
+          <div class="field-group" id="field-auto-detect" style="display:none">
+            <label class="toggle-label">
+              <input type="checkbox" id="toggle-auto-detect">
+              <span>Auto-detect current book from Apple Books on launch</span>
+            </label>
+          </div>
+
+          <div class="settings-actions">
+            <button class="btn btn-primary" id="btn-save-settings">Save Settings</button>
+            <button class="btn btn-secondary" id="btn-connect-discord">Connect to Discord</button>
+            <button class="btn btn-ghost btn-sm" id="btn-disconnect-discord">Disconnect</button>
+          </div>
+          <p class="settings-feedback" id="settings-feedback"></p>
+        </div>
+
+        <!-- Reading goals -->
+        <div class="settings-card">
+          <p class="settings-card-title">Reading Goals</p>
+          <div class="field-group">
+            <label class="field-label" for="input-daily-goal">Daily reading goal (minutes)</label>
+            <input type="number" id="input-daily-goal" min="1" max="1440"
+              placeholder="e.g. 30" style="max-width:120px">
+            <p class="field-hint">Set a daily target and track your progress in the Stats tab. Leave blank to disable.</p>
+          </div>
+        </div>
+
+        <!-- Setup guide -->
+        <div class="settings-card">
+          <p class="settings-card-title">Setup Guide</p>
+          <ol class="setup-steps">
+            <li>
+              Go to <a href="#" id="link-dev-portal-2">discord.com/developers/applications</a>
+            </li>
+            <li>
+              Click <strong>New Application</strong> and name it anything
+            </li>
+            <li>
+              Copy the <strong>Application ID</strong> from the General Information tab
+            </li>
+            <li>
+              Paste the ID above, click <strong>Save</strong>, then <strong>Connect to Discord</strong>
+            </li>
+            <li>
+              For book cover artwork in Discord, upload images named <code>book_cover</code>
+              and <code>reading</code> under <strong>Rich Presence → Art Assets</strong>
+            </li>
+          </ol>
+        </div>
+
+        <!-- About -->
+        <div class="settings-card">
+          <p class="settings-card-title">About</p>
+          <p class="text-muted">Pageline — Version 1.0.0</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── Custom Book Modal ──────────────────────────────────────────────────── -->
+<div class="modal-backdrop hidden" id="modal-custom-book" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-heading" id="modal-heading">Add Custom Book</h2>
+      <button class="btn-icon modal-close-btn" id="modal-close" aria-label="Close">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Cover picker -->
+      <div class="modal-cover-col">
+        <div class="cover-picker-zone" id="cover-picker-zone" role="button" tabindex="0" aria-label="Click to upload book cover">
+          <img id="modal-cover-img" class="hidden" src="" alt="Cover preview">
+          <div class="cover-picker-prompt" id="cover-picker-prompt">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <path d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.338-2.32 5.75 5.75 0 01.853 11.095"/>
+            </svg>
+            <span>Upload Cover</span>
+          </div>
+        </div>
+        <div class="cover-url-row">
+          <input type="text" id="modal-cover-url"
+            placeholder="Or paste image URL"
+            autocomplete="off" spellcheck="false">
+        </div>
+        <button class="btn btn-ghost btn-sm" id="btn-clear-cover" style="display:none">
+          Remove cover
+        </button>
+      </div>
+
+      <!-- Fields -->
+      <div class="modal-fields-col">
+        <div class="field-group">
+          <label class="field-label" for="modal-title-input">Title <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="modal-title-input" placeholder="e.g. The Pragmatic Programmer" autocomplete="off">
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="modal-author-input">Author</label>
+          <input type="text" id="modal-author-input" placeholder="e.g. David Thomas, Andrew Hunt" autocomplete="off">
+        </div>
+        <div class="modal-two-col">
+          <div class="field-group">
+            <label class="field-label" for="modal-pages-input">Total Pages</label>
+            <input type="number" id="modal-pages-input" min="1" placeholder="320" style="width:100%;text-align:left;padding:9px 13px">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="modal-current-input">Current Page</label>
+            <input type="number" id="modal-current-input" min="1" value="1" style="width:100%;text-align:left;padding:9px 13px">
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="modal-desc-input">Description</label>
+          <textarea id="modal-desc-input" class="modal-textarea" placeholder="Brief description (optional)" rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-save">Save Book</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+
+<script src="lib/books.js"></script>
+<script src="lib/utils.js"></script>
+<script src="renderer.js"></script>
+</body>
+</html>

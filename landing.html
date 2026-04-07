@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pageline — Show what you're reading on Discord</title>
+<meta name="description" content="A free desktop app that turns your book into a Discord Rich Presence status. Track reading time, pages, streaks, and more.">
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #08080e;
+    --bg-2:      #0e0e1a;
+    --card:      #131320;
+    --raised:    #1a1a2c;
+    --border:    rgba(255,255,255,0.08);
+    --border-2:  rgba(255,255,255,0.14);
+    --accent:    #5865f2;
+    --accent-2:  #7c3aed;
+    --accent-glow: rgba(88,101,242,0.35);
+    --text-1:    #eaebf8;
+    --text-2:    #9a9ab8;
+    --text-3:    #5a5a78;
+    --success:   #3ecf6e;
+    --r:         14px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text-1);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+  img { max-width: 100%; display: block; }
+
+  /* ── Background gradient + glow ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(88,101,242,0.25), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 30%, rgba(124,58,237,0.18), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 10% 60%, rgba(62,207,110,0.10), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Layout ── */
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ── Nav ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    background: rgba(8,8,14,0.70);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: -0.01em;
+  }
+  .brand-mark {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center;
+    box-shadow: 0 8px 24px var(--accent-glow);
+  }
+  .brand-mark svg { width: 18px; height: 18px; color: #fff; }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    font-size: 14px;
+    color: var(--text-2);
+  }
+  .nav-links a:hover { color: var(--text-1); }
+  .nav-links .btn { padding: 8px 16px; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 22px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    font: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 180ms ease;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    box-shadow: 0 10px 30px -8px var(--accent-glow);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 40px -10px var(--accent-glow);
+  }
+  .btn-ghost {
+    background: rgba(255,255,255,0.04);
+    color: var(--text-1);
+    border-color: var(--border-2);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.08); }
+
+  /* ── Hero ── */
+  header.hero {
+    padding: 80px 0 60px;
+    text-align: center;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(88,101,242,0.10);
+    border: 1px solid rgba(88,101,242,0.35);
+    font-size: 12px;
+    color: #b9c0ff;
+    font-weight: 500;
+    margin-bottom: 28px;
+  }
+  .pill::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--success);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--success);
+  }
+  h1 {
+    font-size: clamp(38px, 6vw, 68px);
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+    font-weight: 800;
+    background: linear-gradient(180deg, #fff 30%, #b9b9d8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 24px;
+  }
+  h1 .grad {
+    background: linear-gradient(135deg, #8a96ff 0%, #c084fc 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .sub {
+    font-size: clamp(16px, 1.6vw, 19px);
+    color: var(--text-2);
+    max-width: 620px;
+    margin: 0 auto 36px;
+  }
+  .hero-cta {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .hero-meta {
+    color: var(--text-3);
+    font-size: 13px;
+  }
+
+  /* ── Mock app screenshot ── */
+  .mock-wrap {
+    margin: 70px auto 0;
+    max-width: 980px;
+    position: relative;
+  }
+  .mock-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -40px -40px 30px;
+    background: radial-gradient(ellipse 70% 60% at 50% 50%, var(--accent-glow), transparent 70%);
+    filter: blur(40px);
+    z-index: -1;
+  }
+  .mock {
+    border: 1px solid var(--border-2);
+    border-radius: 16px;
+    background: var(--bg-2);
+    box-shadow:
+      0 40px 100px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(255,255,255,0.04) inset;
+    overflow: hidden;
+  }
+  .mock-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #0b0b14;
+    border-bottom: 1px solid var(--border);
+  }
+  .mock-bar i {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: #3a3a4a;
+  }
+  .mock-bar i:nth-child(1) { background: #ff5f57; }
+  .mock-bar i:nth-child(2) { background: #febc2e; }
+  .mock-bar i:nth-child(3) { background: #28c840; }
+  .mock-body {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    min-height: 460px;
+  }
+  .mock-side {
+    background: #0a0a14;
+    border-right: 1px solid var(--border);
+    padding: 22px 14px;
+  }
+  .mock-side .brand {
+    font-size: 14px;
+    margin-bottom: 24px;
+    padding-left: 4px;
+  }
+  .mock-side .brand-mark { width: 24px; height: 24px; border-radius: 6px; }
+  .mock-side .brand-mark svg { width: 14px; height: 14px; }
+  .mock-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: var(--text-2);
+    font-size: 13px;
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  .mock-nav-item.active {
+    background: rgba(88,101,242,0.15);
+    color: #fff;
+  }
+  .mock-nav-item .dot { width:14px;height:14px;border-radius:3px;background:currentColor;opacity:0.5;}
+  .mock-content {
+    padding: 30px 32px;
+  }
+  .mock-content h3 { font-size: 22px; margin-bottom: 22px; letter-spacing: -0.02em; }
+  .mock-card {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 24px;
+    background: var(--card);
+    padding: 22px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .mock-cover {
+    aspect-ratio: 2/3;
+    background: linear-gradient(135deg, #2a1f4d, #4a3a7d);
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    color: #c8c0ff;
+    font-weight: 700;
+    font-size: 32px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+  }
+  .mock-meta .t { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .mock-meta .a { font-size: 13px; color: var(--text-2); margin-bottom: 14px; }
+  .mock-progress {
+    height: 6px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 14px 0 8px;
+  }
+  .mock-progress > div {
+    width: 64%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  }
+  .mock-meta .pct { font-size: 12px; color: var(--text-2); }
+  .mock-meta .timer {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--success);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .mock-meta .timer::before {
+    content: ''; width: 7px; height: 7px;
+    background: var(--success);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--success);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ── Sections ── */
+  section { padding: 100px 0; position: relative; }
+  .section-head {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto 60px;
+  }
+  .section-head .eyebrow {
+    color: #8a96ff;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+  }
+  h2 {
+    font-size: clamp(28px, 4vw, 44px);
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    font-weight: 700;
+  }
+  .section-head p { color: var(--text-2); font-size: 17px; }
+
+  /* ── Features ── */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .feature {
+    background: linear-gradient(180deg, var(--card), var(--bg-2));
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 28px;
+    transition: all 250ms ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 200px 100px at top left, rgba(88,101,242,0.10), transparent 70%);
+    opacity: 0;
+    transition: opacity 250ms;
+  }
+  .feature:hover {
+    border-color: var(--border-2);
+    transform: translateY(-3px);
+  }
+  .feature:hover::before { opacity: 1; }
+  .feature-icon {
+    width: 44px; height: 44px;
+    border-radius: 11px;
+    background: rgba(88,101,242,0.12);
+    border: 1px solid rgba(88,101,242,0.30);
+    display: grid; place-items: center;
+    color: #b9c0ff;
+    margin-bottom: 18px;
+    position: relative;
+  }
+  .feature h3 { font-size: 17px; margin-bottom: 8px; letter-spacing: -0.01em; }
+  .feature p { color: var(--text-2); font-size: 14px; position: relative; }
+
+  /* ── Steps ── */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 24px;
+    counter-reset: step;
+  }
+  .step {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 28px 24px;
+    position: relative;
+    counter-increment: step;
+  }
+  .step::before {
+    content: counter(step, decimal-leading-zero);
+    position: absolute;
+    top: 20px; right: 22px;
+    font-size: 38px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0.6;
+    letter-spacing: -0.04em;
+  }
+  .step h3 { font-size: 16px; margin-bottom: 8px; max-width: 70%; }
+  .step p { color: var(--text-2); font-size: 13.5px; }
+
+  /* ── Stats strip ── */
+  .strip {
+    background: linear-gradient(135deg, rgba(88,101,242,0.08), rgba(124,58,237,0.06));
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 24px;
+    text-align: center;
+  }
+  .strip .v {
+    font-size: 36px;
+    font-weight: 800;
+    background: linear-gradient(180deg, #fff, #a8b0ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.03em;
+  }
+  .strip .l { color: var(--text-2); font-size: 13px; margin-top: 4px; }
+
+  /* ── CTA ── */
+  .cta-card {
+    background: linear-gradient(135deg, rgba(88,101,242,0.16), rgba(124,58,237,0.12));
+    border: 1px solid rgba(88,101,242,0.35);
+    border-radius: 20px;
+    padding: 60px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 50% 80% at 0% 100%, rgba(88,101,242,0.30), transparent 60%),
+      radial-gradient(ellipse 50% 80% at 100% 0%, rgba(124,58,237,0.30), transparent 60%);
+    pointer-events: none;
+  }
+  .cta-card > * { position: relative; }
+  .cta-card h2 { margin-bottom: 14px; }
+  .cta-card p { color: var(--text-2); margin-bottom: 28px; }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 36px 0;
+    color: var(--text-3);
+    font-size: 13px;
+  }
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .foot a:hover { color: var(--text-1); }
+  .foot-links { display: flex; gap: 22px; }
+
+  @media (max-width: 720px) {
+    .nav-links a:not(.btn) { display: none; }
+    .mock-body { grid-template-columns: 1fr; }
+    .mock-side { display: none; }
+    .mock-card { grid-template-columns: 100px 1fr; gap: 16px; padding: 16px; }
+    section { padding: 70px 0; }
+    header.hero { padding: 50px 0 30px; }
+    .strip, .cta-card { padding: 32px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Nav ── -->
+<nav>
+  <div class="wrap nav-inner">
+    <a href="#" class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
+      </span>
+      Pageline
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#download" class="btn btn-ghost">Download</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<header class="hero">
+  <div class="wrap">
+    <span class="pill">Free · Open source · Mac, Windows &amp; Linux</span>
+    <h1>Show what you're reading <br><span class="grad">on Discord.</span></h1>
+    <p class="sub">
+      Pageline turns your current book into a live Discord Rich Presence —
+      cover art, page progress, and reading time, right on your profile.
+    </p>
+    <div class="hero-cta">
+      <a href="#download" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+        Download for free
+      </a>
+      <a href="#how" class="btn btn-ghost">See how it works</a>
+    </div>
+    <p class="hero-meta">No account · No tracking · Works offline</p>
+
+    <!-- Mock screenshot -->
+    <div class="mock-wrap">
+      <div class="mock">
+        <div class="mock-bar"><i></i><i></i><i></i></div>
+        <div class="mock-body">
+          <aside class="mock-side">
+            <div class="brand">
+              <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg></span>
+              Pageline
+            </div>
+            <div class="mock-nav-item active"><span class="dot"></span>Reading</div>
+            <div class="mock-nav-item"><span class="dot"></span>Search</div>
+            <div class="mock-nav-item"><span class="dot"></span>Library</div>
+            <div class="mock-nav-item"><span class="dot"></span>Stats</div>
+            <div class="mock-nav-item"><span class="dot"></span>Settings</div>
+          </aside>
+          <div class="mock-content">
+            <h3>Now Reading</h3>
+            <div class="mock-card">
+              <div class="mock-cover">P</div>
+              <div class="mock-meta">
+                <div class="t">The Pragmatic Programmer</div>
+                <div class="a">David Thomas, Andrew Hunt</div>
+                <div class="mock-progress"><div></div></div>
+                <div class="pct">Page 205 of 320 · 64% complete</div>
+                <div class="timer">Reading for 0:42:18</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Features ── -->
+<section id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Features</div>
+      <h2>Everything a reader needs.</h2>
+      <p>From a private library to a daily streak tracker — built for people who actually finish books.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        </div>
+        <h3>Live Discord Rich Presence</h3>
+        <p>Your friends see what book you're reading — title, author, current page, and how long you've been at it.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-5.2-5.2M5.2 5.2a7.5 7.5 0 1010.6 10.6A7.5 7.5 0 005.2 5.2z"/></svg>
+        </div>
+        <h3>Google Books search</h3>
+        <p>Search millions of titles. Add covers and metadata in one click — no manual entry, no fluff.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h2v8H3zM10 7h2v14h-2zM17 4h2v17h-2z"/></svg>
+        </div>
+        <h3>Reading stats &amp; streaks</h3>
+        <p>Daily, weekly, and monthly time. Pages read, books started, and a streak counter to keep you honest.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M9 9h6v6H9z"/></svg>
+        </div>
+        <h3>Apple Books detection</h3>
+        <p>On macOS, Pageline can read your active title straight from the Books app — zero typing.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+        </div>
+        <h3>Daily reading goals</h3>
+        <p>Set a target in minutes. Watch your progress fill up. Build the habit you've been meaning to.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h18"/></svg>
+        </div>
+        <h3>Personal library</h3>
+        <p>Save books you're reading, want to read, or have finished. Add covers from disk or paste a URL.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 100 18 9 9 0 000-18z"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg>
+        </div>
+        <h3>Cross-platform &amp; private</h3>
+        <p>Mac, Windows, and Linux. All data lives on your machine — no sign-up, no telemetry, ever.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/></svg>
+        </div>
+        <h3>CSV export</h3>
+        <p>Export every reading session to CSV and bring your data anywhere. It's yours.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── How it works ── -->
+<section id="how">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Setup in 2 minutes</div>
+      <h2>How it works</h2>
+      <p>Connect once. Pick a book. Start reading. That's it.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <h3>Install &amp; open</h3>
+        <p>Download Pageline for your OS and launch the app.</p>
+      </div>
+      <div class="step">
+        <h3>Connect Discord</h3>
+        <p>Paste a free Discord Application ID into Settings and click Connect.</p>
+      </div>
+      <div class="step">
+        <h3>Pick a book</h3>
+        <p>Search Google Books, import from Apple Books, or add your own.</p>
+      </div>
+      <div class="step">
+        <h3>Hit Start Reading</h3>
+        <p>Your status goes live. Pages and timer update automatically.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Stats strip ── -->
+<section style="padding: 20px 0 80px">
+  <div class="wrap">
+    <div class="strip">
+      <div><div class="v">100%</div><div class="l">Free &amp; open source</div></div>
+      <div><div class="v">0</div><div class="l">Accounts required</div></div>
+      <div><div class="v">3</div><div class="l">Platforms supported</div></div>
+      <div><div class="v">∞</div><div class="l">Books in your library</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section id="download" style="padding: 40px 0 120px">
+  <div class="wrap">
+    <div class="cta-card">
+      <h2>Start showing off your reading.</h2>
+      <p>Pageline is free, open source, and runs on every major OS.</p>
+      <div class="hero-cta">
+        <a href="https://github.com/" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-2.16c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.27-1.69-1.27-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.76 2.69 1.25 3.34.96.1-.74.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.18 1.18a11.05 11.05 0 015.78 0c2.21-1.49 3.18-1.18 3.18-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.84 1.18 3.1 0 4.42-2.7 5.4-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.68.8.56C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+          Get on GitHub
+        </a>
+        <a href="#features" class="btn btn-ghost">Learn more</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <div>© Pageline — Built for readers.</div>
+    <div class="foot-links">
+      <a href="#features">Features</a>
+      <a href="#how">Setup</a>
+      <a href="#download">Download</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
