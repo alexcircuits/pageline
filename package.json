@@ -1,6 +1,6 @@
 {
   "name": "pageline",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Show your book reading activity on Discord",
   "main": "main.js",
   "scripts": {
@@ -33,6 +33,7 @@
       "index.html",
       "renderer.js",
       "styles.css",
+      "lib/**",
       "assets/**"
     ],
     "mac": {
